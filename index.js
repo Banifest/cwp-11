@@ -23,6 +23,18 @@ app.get('/', (req, res) =>
     res.send('Hello world');
 });
 
+app.get('/api/*', (req, res, next) =>
+{
+    fs.appendFile('log.log', `{"data":${new Date()},\n "params":${JSON.stringify(req.query)}}`);
+    next();
+});
+
+app.post('/api/*', (req, res, next) =>
+{
+    fs.appendFile('log.log', `{"data":${new Date()},\n "params":${JSON.stringify(req.body)}}`);
+    next();
+});
+
 app.get('/api/films/readall', (req, res) =>
 {
     res.contentType('application/json');
@@ -305,6 +317,7 @@ app.get('/images/actors/:name', (req,res)=>
         !status ? res.redirect('../actors/NO.png') : res.sendFile(`images/actors/${req.params.name}`)
     });
 });
+
 
 app.listen(3000, () =>
 {
