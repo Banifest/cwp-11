@@ -2,7 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const app = express();
-app.use(bodyParser.urlencoded({extended: true}), express.static('images/actors'));
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.static('public'));
 
 let FILMS = JSON.parse(fs.readFileSync('top250.json'));
 let ACTORS = JSON.parse(fs.readFileSync('actors.json'));
@@ -297,6 +298,13 @@ app.post('/api/actors/delete', (req, res) =>
     }
 });
 
+app.get('/images/actors/:name', (req,res)=>
+{
+    fs.stat(`public/images/actors/${req.params.name}`, (err, status) =>
+    {
+        !status ? res.redirect('../actors/NO.png') : res.sendFile(`images/actors/${req.params.name}`)
+    });
+});
 
 app.listen(3000, () =>
 {
