@@ -2,9 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const app = express();
-app.use(bodyParser.urlencoded({extended: true}), express.static('public'));
+app.use(bodyParser.urlencoded({extended: true}), express.static('images/actors'));
 
 let FILMS = JSON.parse(fs.readFileSync('top250.json'));
+let ACTORS = JSON.parse(fs.readFileSync('actors.json'));
 
 function normalizePosition(arr)
 {
@@ -169,6 +170,123 @@ app.post('/api/films/delete', (req, res) =>
 
             normalizePosition(FILMS);
             fs.writeFile('top250.json', JSON.stringify(FILMS));
+            res.send('{"status":"OK"}');
+        }
+
+    }
+    catch (err)
+    {
+        res.send('{"status":"error"');
+    }
+});
+
+app.get('/api/actors/readall', (req, res) =>
+{
+    res.contentType('application/json');
+    ACTORS.sort((a, b) => a.liked < b.liked ? 1 : -1);
+    res.send(JSON.stringify(ACTORS));
+});
+
+app.get('/api/actors/read', (req, res) =>
+{
+    res.contentType('application/json');
+    let actor = ACTORS.filter((actor) => Number(req.query.id) === actor.id);
+    res.send(actor ? JSON.stringify(actor[0]) : 'not correct params');
+});
+
+app.post('/api/films/create', (req, res) =>
+{
+    try
+    {
+        res.contentType('application/json');
+
+        if (!req.body.name || !req.body.birth || !req.body.films || !req.body.liked || !req.body.photo)
+        {
+            res.send('{"status":"Non correct params"');
+            return;
+        }
+
+        let idMax = 0;
+        for (let iter of ACTORS)
+        {
+            idMax = Math.max(iter.id, idMax);
+        }
+        let newActor =
+            ({
+                id: idMax + 1,
+                name: req.body.name,
+                birth:req.body.birth,
+                films: req.body.films,
+                liked: req.body.liked,
+                photo: req.body.photo
+            });
+
+        ACTORS.push(newActor);
+        fs.writeFile('actors.json', JSON.stringify(ACTORS));
+        res.send(JSON.stringify(newActor));
+    }
+    catch (err)
+    {
+        console.log(err);
+        res.send('{"status":"Non correct params"');
+    }
+});
+
+app.post('/api/actors/update', (req, res) =>
+{
+    try
+    {
+        res.contentType('application/json');
+        let actor = ACTORS.filter((actor) => Number(req.body.id) === actor.id)[0];
+
+        if (actor)
+        {
+            actor.title = req.body.title ? req.body.title : film.title;
+            actor.rating = req.body.rating ? req.body.rating : film.rating;
+            actor.year = Number(req.body.year) ? req.body.year : film.year;
+            actor.budget = Number(req.body.budget) ? req.body.budget : film.budget;
+            actor.gross = Number(req.body.gross) ? req.body.gross : film.gross;
+            actor.poster = req.body.poster ? req.body.poster : film.poster;
+            actor.position = Number(req.body.position) ? req.body.position : film.position;
+        }
+        else
+        {
+            res.send('{"status":"Non correct params"');
+            return;
+        }
+
+        fs.writeFile('actors.json', JSON.stringify(ACTORS));
+        res.send('{"status":"OK"}');
+    }
+    catch (err)
+    {
+        res.send('{"status":"error"}');
+    }
+});
+
+app.post('/api/actors/delete', (req, res) =>
+{
+    try
+    {
+        res.contentType('application/json');
+
+        if(!ACTORS.filter((actor) => Number(req.query.id) === acotr.id).length)
+        {
+            res.send('{"status":"NOT CORRECT ID"}');
+            return;
+        }
+        else
+        {
+            for (let iter = 0; iter < ACTORS.length; iter++)
+            {
+                if (ACTORS[iter].id === Number(req.body.id))
+                {
+                    ACTORS.splice(iter, 1);
+                    break;
+                }
+            }
+
+            fs.writeFile('actors.json', JSON.stringify(ACTORS));
             res.send('{"status":"OK"}');
         }
 
