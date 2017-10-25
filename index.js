@@ -23,17 +23,12 @@ app.get('/', (req, res) =>
     res.send('Hello world');
 });
 
-app.get('/api/*', (req, res, next) =>
+app.all('/api/*', (req, res, next) =>
 {
-    fs.appendFile('log.log', `{"data":${new Date()},\n "params":${JSON.stringify(req.query)}}`);
+    fs.appendFile('log.log', `{"data":${new Date()},\n "params":${JSON.stringify(req.query)}\n, "path":${req.originalUrl}}\n\n\n`);
     next();
 });
 
-app.post('/api/*', (req, res, next) =>
-{
-    fs.appendFile('log.log', `{"data":${new Date()},\n "params":${JSON.stringify(req.body)}}`);
-    next();
-});
 
 app.get('/api/films/readall', (req, res) =>
 {
