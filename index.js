@@ -55,7 +55,7 @@ app.post('/api/films/create', (req, res) =>
     {
         res.contentType('application/json');
 
-        if(req.body.year < 1895 || req.body.budget < 0 || req.body.gross < 0 ||
+        if(req.body.year < 1895 || req.body.budget < 0 || req.body.gross < 0 || !req.body.position ||
             req.body.poster === '' || Number(req.body.rating) > 10 || Number(req.body.rating) <= 0)
         {
             res.send('{"status":"NOT CORRECT PARAMS"}');
@@ -79,19 +79,11 @@ app.post('/api/films/create', (req, res) =>
                 position: Number(req.body.position)
             });
 
-        if (FILMS.filter((film) => Number(req.body.position) === film.position).length)
-        {
-            FILMS = FILMS.filter((film) => Number(req.body.position) > film.position)
-                .concat([newFilm], FILMS.filter((film) =>
-                                                {
-                                                    if (film.position >= req.body.position)
-                                                    {
-                                                        film.position++;
-                                                        return true;
-                                                    }
-                                                }));
-        }
+        FILMS.forEach(iter => iter.position >= newFilm.position ? iter.position++: iter.position);
+        FILMS.push(newFilm);
+
         normalizePosition(FILMS);
+        newFilm = FILMS.filter((film) => newFilm.id === film.id)[0];
 
         FILMS.sort((a, b) => a.position > b.position ? 1 : -1);
         fs.writeFile('top250.json', JSON.stringify(FILMS));
@@ -119,18 +111,9 @@ app.post('/api/films/update', (req, res) =>
         res.contentType('application/json');
         let film = FILMS.filter((film) => Number(req.body.id) === film.id)[0];
 
-        if (req.body.position && Number(req.body.position) !== film.position &&
-            FILMS.filter((film) => Number(req.body.position) === film.position).length)
+        if (req.body.position)
         {
-            FILMS = FILMS.filter((film) => Number(req.body.position) > film.position)
-                .concat(FILMS.filter((film) =>
-                                     {
-                                         if (film.position >= req.body.position)
-                                         {
-                                             film.position++;
-                                             return true;
-                                         }
-                                     }));
+            FILMS.forEach(iter => iter.position >= req.body.position ? iter.position++: iter.position);
         }
 
         if (film)
@@ -145,7 +128,8 @@ app.post('/api/films/update', (req, res) =>
         }
         else
         {
-            throw 'bad id';
+            res.send('{"status:"bad id"}');
+            return;
         }
 
         normalizePosition(FILMS);
@@ -165,10 +149,10 @@ app.post('/api/films/delete', (req, res) =>
         res.contentType('application/json');
 
 
-        if(!FILMS.filter((film) => Number(req.query.id) === film.id).length)
+        if(!FILMS.filter((film) => Number(req.body.id) === film.id).length)
         {
-            console.log("aa");
             res.send('{"status":"NOT CORRECT ID"}');
+            return;
         }
         else
         {
@@ -193,6 +177,7 @@ app.post('/api/films/delete', (req, res) =>
     }
 });
 
+
 app.get('/api/actors/readall', (req, res) =>
 {
     res.contentType('application/json');
@@ -207,7 +192,7 @@ app.get('/api/actors/read', (req, res) =>
     res.send(actor ? JSON.stringify(actor[0]) : 'not correct params');
 });
 
-app.post('/api/films/create', (req, res) =>
+app.post('/api/actors/create', (req, res) =>
 {
     try
     {
@@ -224,6 +209,7 @@ app.post('/api/films/create', (req, res) =>
         {
             idMax = Math.max(iter.id, idMax);
         }
+
         let newActor =
             ({
                 id: idMax + 1,
@@ -254,17 +240,15 @@ app.post('/api/actors/update', (req, res) =>
 
         if (actor)
         {
-            actor.title = req.body.title ? req.body.title : film.title;
-            actor.rating = req.body.rating ? req.body.rating : film.rating;
-            actor.year = Number(req.body.year) ? req.body.year : film.year;
-            actor.budget = Number(req.body.budget) ? req.body.budget : film.budget;
-            actor.gross = Number(req.body.gross) ? req.body.gross : film.gross;
-            actor.poster = req.body.poster ? req.body.poster : film.poster;
-            actor.position = Number(req.body.position) ? req.body.position : film.position;
+            actor.name = req.body.name ? req.body.name : actor.name;
+            actor.birth = req.body.birth ? req.body.birth : actor.birth;
+            actor.films = Number(req.body.films) ? req.body.films : actor.films;
+            actor.liked = Number(req.body.liked) ? req.body.liked : actor.liked;
+            actor.photo = req.body.photo ? req.body.photo : actor.photo;
         }
         else
         {
-            res.send('{"status":"Non correct params"');
+            res.send('{"status":"Non correct id"');
             return;
         }
 
@@ -283,7 +267,7 @@ app.post('/api/actors/delete', (req, res) =>
     {
         res.contentType('application/json');
 
-        if(!ACTORS.filter((actor) => Number(req.query.id) === acotr.id).length)
+        if(!ACTORS.filter((actor) => Number(req.body.id) === actor.id).length)
         {
             res.send('{"status":"NOT CORRECT ID"}');
             return;
@@ -295,6 +279,7 @@ app.post('/api/actors/delete', (req, res) =>
                 if (ACTORS[iter].id === Number(req.body.id))
                 {
                     ACTORS.splice(iter, 1);
+                    console.log(ACTORS);
                     break;
                 }
             }
